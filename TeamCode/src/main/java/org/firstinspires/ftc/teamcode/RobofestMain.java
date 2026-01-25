@@ -20,16 +20,7 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 public class RobofestMain extends LinearOpMode {
     /** @noinspection FieldCanBeLocal*/
     private Follower follower;
-    private Servo claw;
-    private Servo lift;
     private AlphaDisplay display;
-    public static double LIFT_DOWN = 0;
-    public static double LIFT_UP = 0.6;
-    public static double LIFT_MEDAL = 0.3;
-    public static double LIFT_START = 0.4;
-    public static double LIFT_DROP = 0.4;
-    public static double CLAW_OPEN = 1;
-    public static double CLAW_CLOSED = 0;
     private final Timer stateTime = new Timer();
     private int state = -1;
     private int end = 1;
@@ -41,8 +32,6 @@ public class RobofestMain extends LinearOpMode {
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        claw = hardwareMap.get(Servo.class, "claw");
-        lift = hardwareMap.get(Servo.class, "lift");
         display = hardwareMap.get(AlphaDisplay.class, "display");
 
         TouchSensor button = hardwareMap.get(TouchSensor.class, "button");
@@ -97,8 +86,7 @@ public class RobofestMain extends LinearOpMode {
         PathChain whiteBox = follower.pathBuilder()
             .addPath(new BezierLine(startPose, whitePose.plus(new Pose (0,-3))))
             .setLinearHeadingInterpolation(startPose.getHeading(),whitePose.getHeading())
-            .addPath(new BezierLine(whitePose, whitePose.plus(new Pose (0,-3), Pose whitePose))
-            .setPathEndTimeoutConstraint(0)
+            .addPath(new BezierLine(whitePose, whitePose.plus(new Pose (0,-3))))
             .build();
 
         changeState(0);
@@ -110,7 +98,7 @@ public class RobofestMain extends LinearOpMode {
             if (pressed && !oldPressed && stateTime.getElapsedTimeSeconds() > 0.2) {
                 if (state == 0) {
 //                    display.writeNumber(3);
-                        display.writeCharacter(' ', 0, false);
+                        display.writeCharacter('1', 0, false);
                         display.writeCharacter('6', 1, false);
                         display.writeCharacter('3', 2, false);
                         display.writeCharacter('0', 3, false);
@@ -119,7 +107,10 @@ public class RobofestMain extends LinearOpMode {
                 } else {
                     changeState(0);
                 }
+
             }
+
+
 
             boolean enter = state != oldState;
             oldState = state;
@@ -127,8 +118,6 @@ public class RobofestMain extends LinearOpMode {
             switch (state) {
                 case 0:
                     if(enter) {
-                        liftStart();
-                        openClaw();
                         display.writeCharacter(' ', 0, false);
                         display.writeCharacter(' ', 1, false);
                         display.writeCharacter('G', 2, false);
@@ -137,26 +126,11 @@ public class RobofestMain extends LinearOpMode {
                     }
                     follower.breakFollowing();
                     follower.setPose(startPose);
-                    if (gamepad1.dpad_down) {
-                        liftDown();
-                    }
-                    if (gamepad1.dpad_left) {
-                        liftMedal();
-                    }
-                    if (gamepad1.dpad_up) {
-                        liftUp();
-                    }
-                    if (gamepad1.x) {
-                        openClaw();
-                    }
-                    if (gamepad1.y) {
-                        closeClaw();
-                    }
                     break;
                 case 10:
                     if (enter) {
-                        follower.followPath(whiteBox);
-                    } else if (!follower.isBusy()) {
+                        follower.startTeleOpDrive();
+                        follower.setTeleOpDrive(1,0,0,0);
                         changeState(20);
                     }
                     break;
@@ -168,38 +142,39 @@ public class RobofestMain extends LinearOpMode {
             telemetry.addData("X", follower.getPose().getX());
             telemetry.addData("Y", follower.getPose().getY());
             telemetry.addData("Heading", Math.toDegrees(follower.getPose().getHeading()));
-            telemetry.addData("lift", lift.getPosition());
-            telemetry.addData("claw", claw.getPosition());
+            telemetry.addData("buttonIsPressed", button.isPressed());
+            //telemetry.addData("lift", lift.getPosition());
+            //telemetry.addData("claw", claw.getPosition());
             telemetry.update();
         }
     }
-
-    private void openClaw() {
-        claw.setPosition(CLAW_OPEN);
-    }
-
-    private void liftUp() {
-        lift.setPosition(LIFT_UP);
-    }
-
-    private void liftStart() {
-        lift.setPosition(LIFT_START);
-    }
-
-    private void liftDown() {
-        lift.setPosition(LIFT_DOWN);
-    }
-    private void liftDrop() {
-        lift.setPosition(LIFT_DROP);
-    }
-
-    private void liftMedal() {
-        lift.setPosition(LIFT_MEDAL);
-    }
-
-    private void closeClaw() {
-        claw.setPosition(CLAW_CLOSED);
-    }
+//
+//    private void openClaw() {
+//        claw.setPosition(CLAW_OPEN);
+//    }
+//
+//    private void liftUp() {
+//        lift.setPosition(LIFT_UP);
+//    }
+//
+//    private void liftStart() {
+//        lift.setPosition(LIFT_START);
+//    }
+//
+//    private void liftDown() {
+//        lift.setPosition(LIFT_DOWN);
+//    }
+//    private void liftDrop() {
+//        lift.setPosition(LIFT_DROP);
+//    }
+//
+//    private void liftMedal() {
+//        lift.setPosition(LIFT_MEDAL);
+//    }
+//
+//    private void closeClaw() {
+//        claw.setPosition(CLAW_CLOSED);
+//    }
 
     private void changeState(int newState) {
         stateTime.resetTimer();
