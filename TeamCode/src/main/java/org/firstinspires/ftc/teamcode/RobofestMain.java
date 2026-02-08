@@ -20,7 +20,21 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 public class RobofestMain extends LinearOpMode {
     /** @noinspection FieldCanBeLocal*/
     private Follower follower;
+    private Servo elbow;
+    private Servo wrist;
+    private Servo gripLeft;
+    private Servo gripRight;
     private AlphaDisplay display;
+    public static double GRIP_OPEN = 0;
+    public static  double GRIP_CLOSE = 1;
+    public static  double ELBOW_PICKUP = 0.15;
+    public static  double WRIST_PICKUP = 0.05;
+    public static  double ELBOW_BALL = 0.55;
+    public static  double WRIST_BALL = 0.5;
+    public static double ELBOW_BEAM = 0.5;
+    public static double WRIST_BEAM = 0.5;
+    public static  double ELBOW_TRAVEL = 0.6;
+    public static  double WRIST_TRAVEL = 0.35;
     private final Timer stateTime = new Timer();
     private int state = -1;
     private int end = 1;
@@ -33,6 +47,10 @@ public class RobofestMain extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         display = hardwareMap.get(AlphaDisplay.class, "display");
+        elbow = hardwareMap.get(Servo.class, "elbow");
+        wrist = hardwareMap.get(Servo.class, "wrist");
+        gripLeft = hardwareMap.get(Servo.class, "gripLeft");
+        gripRight = hardwareMap.get(Servo.class, "gripRight");
 
         TouchSensor button = hardwareMap.get(TouchSensor.class, "button");
         boolean oldPressed = false;
@@ -98,11 +116,11 @@ public class RobofestMain extends LinearOpMode {
             if (pressed && !oldPressed && stateTime.getElapsedTimeSeconds() > 0.2) {
                 if (state == 0) {
 //                    display.writeNumber(3);
-                        display.writeCharacter('1', 0, false);
-                        display.writeCharacter('6', 1, false);
-                        display.writeCharacter('3', 2, false);
-                        display.writeCharacter('0', 3, false);
-                        display.updateDisplay(); // don't forget to call updateDisplay() or maybe do it automatically
+                    display.writeCharacter('1', 0, false);
+                    display.writeCharacter('6', 1, false);
+                    display.writeCharacter('3', 2, false);
+                    display.writeCharacter('0', 3, false);
+                    display.updateDisplay(); // don't forget to call updateDisplay() or maybe do it automatically
                     changeState(10);
                 } else {
                     changeState(0);
@@ -111,18 +129,34 @@ public class RobofestMain extends LinearOpMode {
             }
 
 
-
             boolean enter = state != oldState;
             oldState = state;
 
             switch (state) {
                 case 0:
-                    if(enter) {
+                    if (enter) {
                         display.writeCharacter(' ', 0, false);
                         display.writeCharacter(' ', 1, false);
                         display.writeCharacter('G', 2, false);
                         display.writeCharacter('O', 3, false);
                         display.updateDisplay();
+                    }
+                    if (gamepad1.left_bumper) {
+                        closeLeft();
+                    } else if (gamepad1.right_bumper) {
+                        closeRight();
+                    } else if (gamepad1.left_trigger > 0.5) {
+                        openLeft();
+                    } else if (gamepad1.right_trigger > 0.5) {
+                        openRight();
+                    } else if (gamepad1.dpad_up) {
+                        armTravel();
+                    } else if (gamepad1.dpad_down) {
+                        armPickup();
+                    } else if (gamepad1.dpad_left) {
+                        armBall();
+                    } else if (gamepad1.dpad_right) {
+                        armBeam();
                     }
                     follower.breakFollowing();
                     follower.setPose(startPose);
@@ -148,11 +182,35 @@ public class RobofestMain extends LinearOpMode {
             telemetry.update();
         }
     }
-//
-//    private void openClaw() {
-//        claw.setPosition(CLAW_OPEN);
-//    }
-//
+
+    private void closeLeft() {
+        gripLeft.setPosition(GRIP_CLOSE);
+    }
+    private void openLeft() {
+        gripLeft.setPosition(GRIP_OPEN);
+    }
+    private void closeRight() {
+        gripRight.setPosition(GRIP_CLOSE);
+    }
+    private void openRight() {
+        gripRight.setPosition(GRIP_OPEN);
+    }
+    private void armPickup() {
+        elbow.setPosition(ELBOW_PICKUP);
+        wrist.setPosition(WRIST_PICKUP);
+    }
+    private void armBall() {
+        elbow.setPosition(ELBOW_BALL);
+        wrist.setPosition(WRIST_BALL);
+    }
+    private void armTravel() {
+        elbow.setPosition(ELBOW_TRAVEL);
+        wrist.setPosition(WRIST_TRAVEL);
+    }
+    private void armBeam() {
+        elbow.setPosition(ELBOW_BEAM);
+        wrist.setPosition(WRIST_BEAM);
+    }
 //    private void liftUp() {
 //        lift.setPosition(LIFT_UP);
 //    }
