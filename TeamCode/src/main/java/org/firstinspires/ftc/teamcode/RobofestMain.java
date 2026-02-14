@@ -27,8 +27,8 @@ public class RobofestMain extends LinearOpMode {
     private AlphaDisplay display;
     public static double GRIP_OPEN = 0;
     public static  double GRIP_CLOSE = 1;
-    public static  double ELBOW_PICKUP = 0.15;
-    public static  double WRIST_PICKUP = 0.05;
+    public static  double ELBOW_PICKUP = 0.005;
+    public static  double WRIST_PICKUP = 0;
     public static  double ELBOW_BALL = 0.55;
     public static  double WRIST_BALL = 0.5;
     public static double ELBOW_BEAM = 0.5;
