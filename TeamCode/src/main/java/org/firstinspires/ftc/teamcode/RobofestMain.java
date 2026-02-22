@@ -55,12 +55,13 @@ public class RobofestMain extends LinearOpMode {
         TouchSensor button = hardwareMap.get(TouchSensor.class, "button");
         boolean oldPressed = false;
 
+        Pose beam2Pose = new Pose(inches(30), inches(50), Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(12,9, Math.toRadians(90));
+        Pose startPoseNorth = new Pose(28,9, Math.toRadians(90));
         //noinspection unused
         Pose startPoseEast = new Pose(5.5, 14, Math.toRadians(0));
         //noinspection unused
         Pose startPoseWest = new Pose(5.5, 14, Math.toRadians(180));
-        //noinspection unused
-        Pose startPoseNorth = new Pose( 6.5, 15, Math.toRadians(90));
         //noinspection unused
         Pose startPoseSouth = new Pose(5.5, 14.5, Math.toRadians(-90));
         //noinspection unused
@@ -92,7 +93,7 @@ public class RobofestMain extends LinearOpMode {
         // ==================================
 
         //noinspection UnnecessaryLocalVariable
-        Pose startPose = startPoseWest;
+        Pose startPose = startPoseNorth;
         //noinspection UnnecessaryLocalVariable
         Pose whitePose = white1Pose;
         Pose stackPose = new Pose(boxBpose.getX(), boxBpose.getY(), boxBpose.getHeading());
@@ -106,6 +107,13 @@ public class RobofestMain extends LinearOpMode {
             .setLinearHeadingInterpolation(startPose.getHeading(),whitePose.getHeading())
             .addPath(new BezierLine(whitePose, whitePose.plus(new Pose (0,-3))))
             .build();
+        PathChain beam2 = follower.pathBuilder()
+                .addPath(new BezierLine(startPose, halfwayToBeam2))
+                .setLinearHeadingInterpolation(startPose.getHeading(), halfwayToBeam2.getHeading())
+                //.addPath(new BezierLine(halfwayToBeam2, beam2Pose))
+                //.setLinearHeadingInterpolation()
+                .build();
+
 
         changeState(0);
 
@@ -162,12 +170,13 @@ public class RobofestMain extends LinearOpMode {
                     follower.setPose(startPose);
                     break;
                 case 10:
-                    if (enter) {
-                        follower.startTeleOpDrive();
-                        follower.setTeleOpDrive(1,0,0,0);
-                        changeState(20);
-                    }
+                if (enter) {
+                    follower.followPath(beam2);
+                } else if (!follower.isBusy()) {
+                    changeState(20);
+                }
                     break;
+                case 20:
             }
             oldPressed = pressed;
             telemetry.addData("state", state);
@@ -210,6 +219,9 @@ public class RobofestMain extends LinearOpMode {
     private void armBeam() {
         elbow.setPosition(ELBOW_BEAM);
         wrist.setPosition(WRIST_BEAM);
+    }
+    private static double inches(double centimeters) {
+        return(centimeters/2.54);
     }
 //    private void liftUp() {
 //        lift.setPosition(LIFT_UP);
