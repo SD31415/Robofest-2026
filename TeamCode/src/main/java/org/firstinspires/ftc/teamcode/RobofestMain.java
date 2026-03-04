@@ -25,16 +25,26 @@ public class RobofestMain extends LinearOpMode {
     private Servo gripLeft;
     private Servo gripRight;
     private AlphaDisplay display;
+
+    // Grip
+
     public static double GRIP_OPEN = 0;
     public static  double GRIP_CLOSE = 1;
-    public static  double ELBOW_PICKUP = 0.005;
-    public static  double WRIST_PICKUP = 0;
-    public static  double ELBOW_BALL = 0.55;
-    public static  double WRIST_BALL = 0.5;
-    public static double ELBOW_BEAM = 0.5;
-    public static double WRIST_BEAM = 0.5;
+
+    // Elbow
+
     public static  double ELBOW_TRAVEL = 0.6;
+    public static  double ELBOW_BALL = 0.55;
+    public static double ELBOW_BEAM = 0.5;
+    public static  double ELBOW_PICKUP = 0.015;
+    
+    // Wrist
+
     public static  double WRIST_TRAVEL = 0.35;
+    public static  double WRIST_BALL = 0.5;
+    public static double WRIST_BEAM = 0.5;
+    public static  double WRIST_PICKUP = 0.01;
+
     private final Timer stateTime = new Timer();
     private int state = -1;
     private int end = 1;
@@ -54,64 +64,60 @@ public class RobofestMain extends LinearOpMode {
 
         TouchSensor button = hardwareMap.get(TouchSensor.class, "button");
         boolean oldPressed = false;
+        /// FINE TUNE ALL THE POSES
+        // Start Poses
 
-        Pose beam2Pose = new Pose(inches(30), inches(50), Math.toRadians(90));
-        Pose halfwayToBeam2 = new Pose(12,9, Math.toRadians(90));
-        Pose startPoseNorth = new Pose(28,9, Math.toRadians(90));
-        //noinspection unused
-        Pose startPoseEast = new Pose(5.5, 14, Math.toRadians(0));
-        //noinspection unused
-        Pose startPoseWest = new Pose(5.5, 14, Math.toRadians(180));
-        //noinspection unused
-        Pose startPoseSouth = new Pose(5.5, 14.5, Math.toRadians(-90));
-        //noinspection unused
-        Pose boxApose = new Pose (8,12, Math.toRadians(-90));
-        //noinspection unused
-        Pose boxBpose = new Pose (20, 12, Math.toRadians(-90));
-        //noinspection unused
-        Pose boxCpose = new Pose(30.5, 12, Math.toRadians(-90));
-        //noinspection unused
-        Pose boxDpose = new Pose (43,12, Math.toRadians(-90));
-        //noinspection unused
-        Pose boxEpose = new Pose (66.25,11.25, Math.toRadians(-80));
+        Pose startPoseNorth = new Pose(toInches(62), toInches(6.5), Math.toRadians(90));
+        // Pose startPoseEast = new Pose(5.5, 14, Math.toRadians(0));
+        // Pose startPoseWest = new Pose(5.5, 14, Math.toRadians(180));
+        // Pose startPoseSouth = new Pose(5.5, 14.5, Math.toRadians(-90));
 
-        //noinspection unused
-        Pose white1Pose = new Pose(13, 17.5, Math.toRadians(90));
-        //noinspection unused
-        Pose white2Pose = new Pose(25, 17.5, Math.toRadians(90));
-        Pose blackDropPose = new Pose(47.75,23, Math.toRadians(180));
-        Pose medalDropPose = new Pose(49,23, Math.toRadians(180));
+        // Beam 2 Poses
 
-        Pose crossPose = new Pose(55, 20, Math.toRadians(0));
-        Pose legoSouth = new Pose(55, 11, Math.toRadians(-90));
-        Pose legoEast = new Pose(62, 16, Math.toRadians(0));
-        Pose legoNorth = new Pose(55, 19, Math.toRadians(90));
-        Pose medalPose = new Pose(65.25, 15, Math.toRadians(0));
+        Pose beam2Pose = new Pose(toInches(36), toInches(20), Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(toInches(36), toInches(6.5), Math.toRadians(90));
+
+        // Ball Poses
+
+        Pose ballPickupPose = new Pose(toInches(72), toInches(40), Math.toRadians(180));
+
+        // Bridge location poses
+
+        Pose bridgeCrossingPose = new Pose(toInches(144), toInches(30),Math.toRadians(0));
+        Pose bridgeNorthPose = new Pose(5.5, 14, Math.toRadians(0));
+        Pose bridgeSouthPose = new Pose(5.5, 14, Math.toRadians(0));
+        Pose bridgeEastPose = new Pose(5.5, 14, Math.toRadians(0));
 
         // ==================================
         // CHANGE THIS STUFF!
         // ==================================
-
-        //noinspection UnnecessaryLocalVariable
         Pose startPose = startPoseNorth;
-        //noinspection UnnecessaryLocalVariable
-        Pose whitePose = white1Pose;
-        Pose stackPose = new Pose(boxBpose.getX(), boxBpose.getY(), boxBpose.getHeading());
-        Pose blackPose = new Pose(boxCpose.getX(), boxCpose.getY()-1, boxCpose.getHeading());
-//        Uncomment lines in white box if black box is E. Also change case 30.
+        Pose bridgeLocation = bridgeNorthPose;
+
+
+
+
 
         follower.setStartingPose(startPose);
 
-        PathChain whiteBox = follower.pathBuilder()
-            .addPath(new BezierLine(startPose, whitePose.plus(new Pose (0,-3))))
-            .setLinearHeadingInterpolation(startPose.getHeading(),whitePose.getHeading())
-            .addPath(new BezierLine(whitePose, whitePose.plus(new Pose (0,-3))))
-            .build();
+
         PathChain beam2 = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, halfwayToBeam2))
                 .setLinearHeadingInterpolation(startPose.getHeading(), halfwayToBeam2.getHeading())
-                //.addPath(new BezierLine(halfwayToBeam2, beam2Pose))
-                //.setLinearHeadingInterpolation()
+                .addPath(new BezierLine(halfwayToBeam2, beam2Pose))
+                .setLinearHeadingInterpolation(halfwayToBeam2.getHeading(), beam2Pose.getHeading())
+                .build();
+        PathChain ballPickup = follower.pathBuilder()
+                .addPath(new BezierLine(bridgeLocation, ballPickupPose))
+                .setLinearHeadingInterpolation(bridgeLocation.getHeading(), ballPickupPose.getHeading())
+                .build();
+        PathChain bridgeBuilder = follower.pathBuilder()
+                .addPath(new BezierLine(beam2Pose, halfwayToBeam2))
+                .setLinearHeadingInterpolation(beam2Pose.getHeading(), halfwayToBeam2.getHeading())
+                .addPath(new BezierLine(halfwayToBeam2, bridgeCrossingPose))
+                .setLinearHeadingInterpolation(halfwayToBeam2.getHeading(), bridgeCrossingPose.getHeading())
+                .addPath(new BezierLine(bridgeCrossingPose, bridgeLocation))
+                .setLinearHeadingInterpolation(bridgeCrossingPose.getHeading(), bridgeLocation.getHeading())
                 .build();
 
 
@@ -123,11 +129,11 @@ public class RobofestMain extends LinearOpMode {
             boolean pressed = button.isPressed();
             if (pressed && !oldPressed && stateTime.getElapsedTimeSeconds() > 0.2) {
                 if (state == 0) {
-//                    display.writeNumber(3);
-                    display.writeCharacter('1', 0, false);
-                    display.writeCharacter('6', 1, false);
-                    display.writeCharacter('3', 2, false);
-                    display.writeCharacter('0', 3, false);
+                //  display.writeNumber(3);
+                    display.writeCharacter('2', 0, false);
+                    display.writeCharacter('1', 1, false);
+                    display.writeCharacter('6', 2, false);
+                    display.writeCharacter('1', 3, false);
                     display.updateDisplay(); // don't forget to call updateDisplay() or maybe do it automatically
                     changeState(10);
                 } else {
@@ -143,6 +149,9 @@ public class RobofestMain extends LinearOpMode {
             switch (state) {
                 case 0:
                     if (enter) {
+                        armPickup();
+                        openLeft();
+                        openRight();
                         display.writeCharacter(' ', 0, false);
                         display.writeCharacter(' ', 1, false);
                         display.writeCharacter('G', 2, false);
@@ -169,14 +178,68 @@ public class RobofestMain extends LinearOpMode {
                     follower.breakFollowing();
                     follower.setPose(startPose);
                     break;
+
                 case 10:
-                if (enter) {
-                    follower.followPath(beam2);
-                } else if (!follower.isBusy()) {
-                    changeState(20);
-                }
+                    if (enter) {
+                        closeRight();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(20);
+                    }
                     break;
                 case 20:
+                   if (enter) {
+                       armTravel();
+                   } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(30);
+                    }
+                    break;
+                case 30:
+                    if (enter) {
+                        follower.followPath(beam2);
+                    } else if (!follower.isBusy()) {
+                        changeState(40);
+                    }
+                    break;
+                case 40:
+                    if (enter) {
+                        armPickup();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(50);
+                    }
+                    break;
+                case 50:
+                    if (enter) {
+                        closeLeft();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(60);
+                    }
+                    break;
+                case 60:
+                    if (enter) {
+                        armTravel();
+                    } else if (stateTime.getElapsedTime() <= 1500) {
+                        changeState(70);
+                    }
+                case 70:
+                    if (enter) {
+                    follower.followPath(bridgeBuilder);
+                    } else if (!follower.isBusy()) {
+                        changeState(80);
+                    }
+                    break;
+                case 80:
+                    if (enter) {
+                        follower.followPath(ballPickup);
+                    } else if (!follower.isBusy()) {
+                        changeState(90);
+                    }
+                    break;
+                case 90:
+                    if (enter) {
+                    // Add drop off and pickup  for ball
+                    // Add endgame task
+                    }
+                    break;
             }
             oldPressed = pressed;
             telemetry.addData("state", state);
@@ -220,7 +283,16 @@ public class RobofestMain extends LinearOpMode {
         elbow.setPosition(ELBOW_BEAM);
         wrist.setPosition(WRIST_BEAM);
     }
-    private static double inches(double centimeters) {
+    private void ballArmPickup() {
+
+    }
+    private void ballArmTravel() {
+
+    }
+    private void ballArmDropoff() {
+
+    }
+    private static double toInches(double centimeters) {
         return(centimeters/2.54);
     }
 //    private void liftUp() {
@@ -248,7 +320,7 @@ public class RobofestMain extends LinearOpMode {
 
     private void changeState(int newState) {
         stateTime.resetTimer();
-//        display.writeNumber(newState);
+        display.writeNumber(newState);
         display.updateDisplay();
         oldState = state;
         state = newState;
