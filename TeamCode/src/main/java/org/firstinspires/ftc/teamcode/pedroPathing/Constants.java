@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -18,12 +20,17 @@ import org.opencv.core.DMatch;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(3.6);
+            .mass(3.6)
+            .forwardZeroPowerAcceleration(-55.3)
+            .lateralZeroPowerAcceleration(-55.9)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0, 0))
+            .headingPIDFCoefficients(new PIDFCoefficients(1,0,0,0))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.012,0,0.00001,0.6,0));
+
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
-            .xVelocity(21)
-            .yVelocity(18.2)
-
+            .xVelocity(23.5)
+            .yVelocity(21.4)
             .rightFrontMotorName("rf")
             .rightRearMotorName("rr")
             .leftRearMotorName("lr")

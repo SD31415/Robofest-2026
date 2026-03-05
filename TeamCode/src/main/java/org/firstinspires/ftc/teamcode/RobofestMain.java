@@ -67,37 +67,39 @@ public class RobofestMain extends LinearOpMode {
         /// FINE TUNE ALL THE POSES
         // Start Poses
 
-        Pose startPoseNorth = new Pose(toInches(62), toInches(6.5), Math.toRadians(90));
-        // Pose startPoseEast = new Pose(5.5, 14, Math.toRadians(0));
-        // Pose startPoseWest = new Pose(5.5, 14, Math.toRadians(180));
-        // Pose startPoseSouth = new Pose(5.5, 14.5, Math.toRadians(-90));
+        Pose startPoseNorth = new Pose(24,4.6 , Math.toRadians(90));
+        Pose startPoseEast = new Pose(5.5, 14, Math.toRadians(0));
+        Pose startPoseWest = new Pose(5.5, 14, Math.toRadians(180));
+        Pose startPoseSouth = new Pose(5.5, 14.5, Math.toRadians(-90));
 
         // Beam 2 Poses
 
-        Pose beam2Pose = new Pose(toInches(36), toInches(20), Math.toRadians(90));
-        Pose halfwayToBeam2 = new Pose(toInches(36), toInches(6.5), Math.toRadians(90));
+        Pose beam2Pose = new Pose(13.6, 12.8, Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(13.6, 5.5, Math.toRadians(90));
 
         // Ball Poses
 
-        Pose ballPickupPose = new Pose(toInches(72), toInches(40), Math.toRadians(180));
+        Pose ballPickupPose = new Pose(27.6, 12.3, Math.toRadians(90));
+        Pose ballDropoffPose = new Pose (57.5, 13.8, Math.toRadians(90));
 
         // Bridge location poses
 
-        Pose bridgeCrossingPose = new Pose(toInches(144), toInches(30),Math.toRadians(0));
-        Pose bridgeNorthPose = new Pose(5.5, 14, Math.toRadians(0));
+        Pose bridgeCrossingPose = new Pose(toInches(144), toInches(30),Math.toRadians(90));
+        Pose bridgeNorthPose = new Pose(57.5, 17.2, Math.toRadians(90));
         Pose bridgeSouthPose = new Pose(5.5, 14, Math.toRadians(0));
         Pose bridgeEastPose = new Pose(5.5, 14, Math.toRadians(0));
 
         // ==================================
-        // CHANGE THIS STUFF!
+        // CHANGE THE STUFF BELOW
         // ==================================
         Pose startPose = startPoseNorth;
         Pose bridgeLocation = bridgeNorthPose;
 
 
 
-
-
+        // ==================================
+        // CHANGE THE STUFF ABOVE
+        // ==================================
         follower.setStartingPose(startPose);
 
 
@@ -119,7 +121,12 @@ public class RobofestMain extends LinearOpMode {
                 .addPath(new BezierLine(bridgeCrossingPose, bridgeLocation))
                 .setLinearHeadingInterpolation(bridgeCrossingPose.getHeading(), bridgeLocation.getHeading())
                 .build();
-
+        PathChain ballDrop = follower.pathBuilder()
+                .addPath(new BezierLine(ballPickupPose, bridgeCrossingPose))
+                .setLinearHeadingInterpolation(ballPickupPose.getHeading(), bridgeCrossingPose.getHeading())
+                .addPath(new BezierLine(bridgeCrossingPose, bridgeLocation))
+                .setLinearHeadingInterpolation(bridgeCrossingPose.getHeading(), bridgeLocation.getHeading())
+                .build();
 
         changeState(0);
 
@@ -222,22 +229,88 @@ public class RobofestMain extends LinearOpMode {
                     }
                 case 70:
                     if (enter) {
-                    follower.followPath(bridgeBuilder);
+                        follower.followPath(bridgeBuilder);
                     } else if (!follower.isBusy()) {
                         changeState(80);
                     }
                     break;
                 case 80:
                     if (enter) {
-                        follower.followPath(ballPickup);
-                    } else if (!follower.isBusy()) {
+                    armBeam();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
                         changeState(90);
                     }
                     break;
                 case 90:
                     if (enter) {
-                    // Add drop off and pickup  for ball
-                    // Add endgame task
+                        openRight();
+                        openLeft();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(100);
+                    }
+                    break;
+                case 100:
+                    if (enter) {
+                        armTravel();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(110);
+                    }
+                    break;
+                case 110:
+                    if (enter) {
+                        follower.followPath(ballPickup);
+                    } else if (!follower.isBusy()) {
+                        changeState(120);
+                    }
+                    break;
+                case 120:
+                    if (enter) {
+                        armPickup();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(130);
+                    }
+                    break;
+                case 130:
+                    if (enter) {
+                        closeLeft();
+                        closeRight();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(140);
+                    }
+                    break;
+                case 140:
+                    if (enter) {
+                        armTravel();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(150);
+                    }
+                    break;
+                case 150:
+                    if (enter) {
+                        follower.followPath(ballDrop);
+                    } else if (!follower.isBusy()) {
+                        changeState(160);
+                    }
+                    break;
+                case 160:
+                    if (enter) {
+                        armBall();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(170);
+                    }
+                    break;
+                case 170:
+                    if (enter) {
+                        openRight();
+                        openLeft();
+                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        changeState(180);
+                    }
+                    break;
+                case 180:
+                    if (enter) {
+                        //make it do the game ending task
+                        follower.breakFollowing();
                     }
                     break;
             }
