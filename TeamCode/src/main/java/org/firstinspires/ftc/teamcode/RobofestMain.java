@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -34,14 +35,14 @@ public class RobofestMain extends LinearOpMode {
     // Elbow
 
     public static  double ELBOW_TRAVEL = 0.6;
-    public static  double ELBOW_BALL = 0.55;
+    public static  double ELBOW_BALL = 0.65;
     public static double ELBOW_BEAM = 0.5;
     public static  double ELBOW_PICKUP = 0.015;
     
     // Wrist
 
     public static  double WRIST_TRAVEL = 0.35;
-    public static  double WRIST_BALL = 0.5;
+    public static  double WRIST_BALL = 0.72;
     public static double WRIST_BEAM = 0.5;
     public static  double WRIST_PICKUP = 0.01;
 
@@ -68,32 +69,42 @@ public class RobofestMain extends LinearOpMode {
         // Start Poses
 
         Pose startPoseNorth = new Pose(24,4.6 , Math.toRadians(90));
-        Pose startPoseEast = new Pose(5.5, 14, Math.toRadians(0));
-        Pose startPoseWest = new Pose(5.5, 14, Math.toRadians(180));
-        Pose startPoseSouth = new Pose(5.5, 14.5, Math.toRadians(-90));
+        Pose startPoseEast = new Pose(31.3, 4, Math.toRadians(0));
+        Pose startPoseWest = new Pose(25, 4.3, Math.toRadians(180));
+        Pose startPoseSouth = new Pose(23.8, 11.7, Math.toRadians(-90));
 
         // Beam 2 Poses
 
-        Pose beam2Pose = new Pose(13.6, 12.8, Math.toRadians(90));
-        Pose halfwayToBeam2 = new Pose(13.6, 5.5, Math.toRadians(90));
+        Pose beam2Pose = new Pose(13.2, 12.7, Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(13.6, 7, Math.toRadians(90));
 
         // Ball Poses
 
-        Pose ballPickupPose = new Pose(27.6, 12.3, Math.toRadians(90));
-        Pose ballDropoffPose = new Pose (57.5, 13.8, Math.toRadians(90));
+        Pose ballPickupPose = new Pose(27.6, 11.5, Math.toRadians(90));
+        Pose ballDropoffPose = new Pose (57.5, 15.8, Math.toRadians(90));
+
+        // Footing one poses
+
+        Pose footingPoseNorth = new  Pose(58, 20, Math.toRadians(90));
+        Pose footingPoseSouth = new  Pose(57.5, 18, Math.toRadians(-90));
+        Pose footingPoseEast = new  Pose(57.5, 18, Math.toRadians(0));
+        Pose preFootingNorthPose = new Pose(footingPoseNorth.getX() - 4, footingPoseNorth.getY() - 5, Math.toRadians(90));
 
         // Bridge location poses
 
-        Pose bridgeCrossingPose = new Pose(toInches(144), toInches(30),Math.toRadians(90));
-        Pose bridgeNorthPose = new Pose(57.5, 17.2, Math.toRadians(90));
-        Pose bridgeSouthPose = new Pose(5.5, 14, Math.toRadians(0));
-        Pose bridgeEastPose = new Pose(5.5, 14, Math.toRadians(0));
+        Pose bridgeCrossingPose = new Pose(toInches(140), toInches(30),Math.toRadians(90));
+        Pose bridgeNorthPose = new Pose(footingPoseNorth.getX(), 16.1, Math.toRadians(90));
+        Pose bridgeSouthPose = new Pose(footingPoseSouth.getX(), 14, Math.toRadians(-90));
+        Pose bridgeEastPose = new Pose(5.5, footingPoseEast.getY(), Math.toRadians(0));
 
         // ==================================
         // CHANGE THE STUFF BELOW
         // ==================================
-        Pose startPose = startPoseNorth;
+        Pose startPose = startPoseWest;
         Pose bridgeLocation = bridgeNorthPose;
+        Pose footingPusher = footingPoseNorth;
+        Pose preFootingPusher = preFootingNorthPose;
+
 
 
 
@@ -105,27 +116,33 @@ public class RobofestMain extends LinearOpMode {
 
         PathChain beam2 = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, halfwayToBeam2))
-                .setLinearHeadingInterpolation(startPose.getHeading(), halfwayToBeam2.getHeading())
+                .setConstantHeadingInterpolation(halfwayToBeam2.getHeading())
                 .addPath(new BezierLine(halfwayToBeam2, beam2Pose))
-                .setLinearHeadingInterpolation(halfwayToBeam2.getHeading(), beam2Pose.getHeading())
+                .setConstantHeadingInterpolation(beam2Pose.getHeading())
                 .build();
         PathChain ballPickup = follower.pathBuilder()
-                .addPath(new BezierLine(bridgeLocation, ballPickupPose))
-                .setLinearHeadingInterpolation(bridgeLocation.getHeading(), ballPickupPose.getHeading())
+                .addPath(new BezierLine(bridgeLocation, bridgeCrossingPose))
+                .setConstantHeadingInterpolation(bridgeCrossingPose.getHeading())
+                .addPath(new BezierLine(bridgeCrossingPose, ballPickupPose))
+                .setConstantHeadingInterpolation(ballPickupPose.getHeading())
                 .build();
-        PathChain bridgeBuilder = follower.pathBuilder()
+        PathChain bridgeTravel = follower.pathBuilder()
                 .addPath(new BezierLine(beam2Pose, halfwayToBeam2))
-                .setLinearHeadingInterpolation(beam2Pose.getHeading(), halfwayToBeam2.getHeading())
-                .addPath(new BezierLine(halfwayToBeam2, bridgeCrossingPose))
-                .setLinearHeadingInterpolation(halfwayToBeam2.getHeading(), bridgeCrossingPose.getHeading())
-                .addPath(new BezierLine(bridgeCrossingPose, bridgeLocation))
-                .setLinearHeadingInterpolation(bridgeCrossingPose.getHeading(), bridgeLocation.getHeading())
+                .setConstantHeadingInterpolation(halfwayToBeam2.getHeading())
+                .addPath(new BezierLine(halfwayToBeam2, preFootingPusher))
+                .setConstantHeadingInterpolation(preFootingPusher.getHeading())
+                .build();
+        PathChain bridgePusher =  follower.pathBuilder()
+                .addPath(new BezierLine(preFootingPusher, footingPusher))
+                .setConstantHeadingInterpolation(footingPusher.getHeading())
+                .addPath(new BezierLine(footingPusher, bridgeLocation))
+                .setConstantHeadingInterpolation(bridgeLocation.getHeading())
                 .build();
         PathChain ballDrop = follower.pathBuilder()
                 .addPath(new BezierLine(ballPickupPose, bridgeCrossingPose))
-                .setLinearHeadingInterpolation(ballPickupPose.getHeading(), bridgeCrossingPose.getHeading())
-                .addPath(new BezierLine(bridgeCrossingPose, bridgeLocation))
-                .setLinearHeadingInterpolation(bridgeCrossingPose.getHeading(), bridgeLocation.getHeading())
+                .setConstantHeadingInterpolation(bridgeCrossingPose.getHeading())
+                .addPath(new BezierLine(bridgeCrossingPose, ballDropoffPose))
+                .setConstantHeadingInterpolation(ballDropoffPose.getHeading())
                 .build();
 
         changeState(0);
@@ -159,8 +176,8 @@ public class RobofestMain extends LinearOpMode {
                         armPickup();
                         openLeft();
                         openRight();
-                        display.writeCharacter(' ', 0, false);
-                        display.writeCharacter(' ', 1, false);
+                        display.writeCharacter('G', 0, false);
+                        display.writeCharacter('O', 1, false);
                         display.writeCharacter('G', 2, false);
                         display.writeCharacter('O', 3, false);
                         display.updateDisplay();
@@ -189,14 +206,14 @@ public class RobofestMain extends LinearOpMode {
                 case 10:
                     if (enter) {
                         closeRight();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                    } else if (stateTime.getElapsedTime() >= 1250) {
                         changeState(20);
                     }
                     break;
                 case 20:
                    if (enter) {
                        armTravel();
-                   } else if (stateTime.getElapsedTime() >= 1500) {
+                   } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(30);
                     }
                     break;
@@ -210,26 +227,34 @@ public class RobofestMain extends LinearOpMode {
                 case 40:
                     if (enter) {
                         armPickup();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                    } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(50);
                     }
                     break;
                 case 50:
                     if (enter) {
                         closeLeft();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                    } else if (stateTime.getElapsedTime() >= 1250) {
                         changeState(60);
                     }
                     break;
                 case 60:
                     if (enter) {
                         armTravel();
-                    } else if (stateTime.getElapsedTime() <= 1500) {
+                    } else if (stateTime.getElapsedTime() <= 1000) {
                         changeState(70);
                     }
+                    break;
                 case 70:
                     if (enter) {
-                        follower.followPath(bridgeBuilder);
+                        follower.followPath(bridgeTravel);
+                    } else if (!follower.isBusy()) {
+                        changeState(75);
+                    }
+                    break;
+                case 75:
+                    if (enter) {
+                        follower.followPath(bridgePusher, 0.3, true);
                     } else if (!follower.isBusy()) {
                         changeState(80);
                     }
@@ -245,20 +270,20 @@ public class RobofestMain extends LinearOpMode {
                     if (enter) {
                         openRight();
                         openLeft();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                    } else if (stateTime.getElapsedTime() >= 1250) {
                         changeState(100);
                     }
                     break;
                 case 100:
                     if (enter) {
                         armTravel();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                    } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(110);
                     }
                     break;
                 case 110:
                     if (enter) {
-                        follower.followPath(ballPickup);
+                        follower.followPath(ballPickup, 0.6, true);
                     } else if (!follower.isBusy()) {
                         changeState(120);
                     }
@@ -266,48 +291,48 @@ public class RobofestMain extends LinearOpMode {
                 case 120:
                     if (enter) {
                         armPickup();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
-                        changeState(130);
-                    }
-                    break;
-                case 130:
-                    if (enter) {
-                        closeLeft();
-                        closeRight();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                    } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(140);
                     }
                     break;
                 case 140:
                     if (enter) {
-                        armTravel();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        closeLeft();
+                        closeRight();
+                    } else if (stateTime.getElapsedTime() >= 1250) {
                         changeState(150);
                     }
                     break;
                 case 150:
                     if (enter) {
-                        follower.followPath(ballDrop);
-                    } else if (!follower.isBusy()) {
+                        armTravel();
+                    } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(160);
                     }
                     break;
                 case 160:
                     if (enter) {
-                        armBall();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        follower.followPath(ballDrop);
+                    } else if (!follower.isBusy()) {
                         changeState(170);
                     }
                     break;
                 case 170:
                     if (enter) {
-                        openRight();
-                        openLeft();
-                    } else if (stateTime.getElapsedTime() >= 1500) {
+                        armBall();
+                    } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(180);
                     }
                     break;
                 case 180:
+                    if (enter) {
+                        openRight();
+                        openLeft();
+                    } else if (stateTime.getElapsedTime() >= 1250) {
+                        changeState(190);
+                    }
+                    break;
+                case 190:
                     if (enter) {
                         //make it do the game ending task
                         follower.breakFollowing();
