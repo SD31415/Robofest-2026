@@ -7,7 +7,6 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -68,6 +67,8 @@ public class RobofestMain extends LinearOpMode {
         /// FINE TUNE ALL THE POSES
         // Start Poses
 
+        // Edge to closest side of line
+
         Pose startPoseNorth = new Pose(24,4.6 , Math.toRadians(90));
         Pose startPoseEast = new Pose(31.3, 4, Math.toRadians(0));
         Pose startPoseWest = new Pose(25, 4.3, Math.toRadians(180));
@@ -75,37 +76,47 @@ public class RobofestMain extends LinearOpMode {
 
         // Beam 2 Poses
 
+        // Edge to closet side of beam
+
         Pose beam2Pose = new Pose(13.2, 12.7, Math.toRadians(90));
         Pose halfwayToBeam2 = new Pose(13.6, 7, Math.toRadians(90));
 
         // Ball Poses
 
         Pose ballPickupPose = new Pose(27.6, 11.5, Math.toRadians(90));
-        Pose ballDropoffPose = new Pose (57.5, 15.8, Math.toRadians(90));
+        Pose ballDropoffNorthPose = new Pose (57.5, 15.8, Math.toRadians(90));
+        Pose ballDropoffEastPose = new Pose (59, 17, Math.toRadians(0));
+        Pose ballDropoffSouthPose = new Pose (57, 12.5, Math.toRadians(-90));
 
         // Footing one poses
 
         Pose footingPoseNorth = new  Pose(58, 20, Math.toRadians(90));
-        Pose footingPoseSouth = new  Pose(57.5, 18, Math.toRadians(-90));
-        Pose footingPoseEast = new  Pose(57.5, 18, Math.toRadians(0));
+        Pose footingPoseSouth = new  Pose(56.8, 8.2, Math.toRadians(-90));
+        Pose footingPoseEast = new  Pose(62.5, 17, Math.toRadians(0));
         Pose preFootingNorthPose = new Pose(footingPoseNorth.getX() - 4, footingPoseNorth.getY() - 5, Math.toRadians(90));
+        Pose preFootingSouthPose = new Pose(footingPoseSouth.getX() + 4, footingPoseEast.getY() + 2, Math.toRadians(-90));
+        Pose preFootingEastPose = new Pose(footingPoseEast.getX() - 5, footingPoseEast.getY() + 3, Math.toRadians(0));
 
         // Bridge location poses
 
         Pose bridgeCrossingPose = new Pose(toInches(140), toInches(30),Math.toRadians(90));
         Pose bridgeNorthPose = new Pose(footingPoseNorth.getX(), 16.1, Math.toRadians(90));
-        Pose bridgeSouthPose = new Pose(footingPoseSouth.getX(), 14, Math.toRadians(-90));
-        Pose bridgeEastPose = new Pose(5.5, footingPoseEast.getY(), Math.toRadians(0));
+        Pose bridgeSouthPose = new Pose(footingPoseSouth.getX(), 11.5, Math.toRadians(-90));
+        Pose bridgeEastPose = new Pose(59,footingPoseEast.getY(), Math.toRadians(0));
+
+        // Beam Dropoffs
+
+        Pose beamSouthDropoffPose = new Pose(56.8, 11.5, Math.toRadians(-90));
 
         // ==================================
         // CHANGE THE STUFF BELOW
         // ==================================
-        Pose startPose = startPoseWest;
-        Pose bridgeLocation = bridgeNorthPose;
-        Pose footingPusher = footingPoseNorth;
-        Pose preFootingPusher = preFootingNorthPose;
-
-
+        Pose startPose = startPoseNorth;
+        Pose bridgeLocation = bridgeSouthPose;
+        Pose footingPusher = footingPoseSouth;
+        Pose preFootingPusher = preFootingSouthPose;
+        Pose ballDropoffPose = ballDropoffSouthPose;
+        Pose beamDropoffPose = beamSouthDropoffPose;
 
 
         // ==================================
@@ -122,7 +133,7 @@ public class RobofestMain extends LinearOpMode {
                 .build();
         PathChain ballPickup = follower.pathBuilder()
                 .addPath(new BezierLine(bridgeLocation, bridgeCrossingPose))
-                .setConstantHeadingInterpolation(bridgeCrossingPose.getHeading())
+                .setLinearHeadingInterpolation(bridgeLocation.getHeading(), bridgeCrossingPose.getHeading())
                 .addPath(new BezierLine(bridgeCrossingPose, ballPickupPose))
                 .setConstantHeadingInterpolation(ballPickupPose.getHeading())
                 .build();
@@ -135,12 +146,12 @@ public class RobofestMain extends LinearOpMode {
         PathChain bridgePusher =  follower.pathBuilder()
                 .addPath(new BezierLine(preFootingPusher, footingPusher))
                 .setConstantHeadingInterpolation(footingPusher.getHeading())
-                .addPath(new BezierLine(footingPusher, bridgeLocation))
-                .setConstantHeadingInterpolation(bridgeLocation.getHeading())
+                .addPath(new BezierLine(footingPusher, beamDropoffPose))
+                .setConstantHeadingInterpolation(beamDropoffPose.getHeading())
                 .build();
         PathChain ballDrop = follower.pathBuilder()
                 .addPath(new BezierLine(ballPickupPose, bridgeCrossingPose))
-                .setConstantHeadingInterpolation(bridgeCrossingPose.getHeading())
+                .setConstantHeadingInterpolation(ballDropoffPose .getHeading())
                 .addPath(new BezierLine(bridgeCrossingPose, ballDropoffPose))
                 .setConstantHeadingInterpolation(ballDropoffPose.getHeading())
                 .build();
