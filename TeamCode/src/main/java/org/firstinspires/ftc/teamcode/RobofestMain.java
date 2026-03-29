@@ -45,7 +45,9 @@ public class RobofestMain extends LinearOpMode {
     public static double WRIST_BEAM = 0.5;
     public static  double WRIST_PICKUP = 0.01;
 
+    public static int ANSWER = 5329;
     private final Timer stateTime = new Timer();
+    private int doneCounter = 0;
     private int state = -1;
     private int end = 1;
     private int oldState = -1;
@@ -65,11 +67,12 @@ public class RobofestMain extends LinearOpMode {
         TouchSensor button = hardwareMap.get(TouchSensor.class, "button");
         boolean oldPressed = false;
         /// FINE TUNE ALL THE POSES
+        // Origin is 11 In for the beam from west edge and 27.75 in for start line
         // Start Poses
 
         // Edge to closest side of line
 
-        Pose startPoseNorth = new Pose(24,4.6 , Math.toRadians(90));
+        Pose startPoseNorth = new Pose(24 - 0.25,4.6 , Math.toRadians(90));
         Pose startPoseEast = new Pose(31.3, 4, Math.toRadians(0));
         Pose startPoseWest = new Pose(25, 4.3, Math.toRadians(180));
         Pose startPoseSouth = new Pose(23.8, 11.7, Math.toRadians(-90));
@@ -78,21 +81,21 @@ public class RobofestMain extends LinearOpMode {
 
         // Edge to closet side of beam
 
-        Pose beam2Pose = new Pose(13.2, 12.7, Math.toRadians(90));
-        Pose halfwayToBeam2 = new Pose(13.6, 7, Math.toRadians(90));
+        Pose beam2Pose = new Pose(13.2 + 7.5, 12.7, Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(13.2 - 1.5, 7, Math.toRadians(90));
 
         // Ball Poses
 
-        Pose ballPickupPose = new Pose(27.6, 11.5, Math.toRadians(90));
+        Pose ballPickupPose = new Pose(27.6 - 0.1, 11.5, Math.toRadians(90));
         Pose ballDropoffNorthPose = new Pose (57.5, 15.8, Math.toRadians(90));
-        Pose ballDropoffEastPose = new Pose (59, 17, Math.toRadians(0));
+        Pose ballDropoffEastPose = new Pose (58, 17, Math.toRadians(0));
         Pose ballDropoffSouthPose = new Pose (57, 12.5, Math.toRadians(-90));
 
         // Footing one poses
 
         Pose footingPoseNorth = new  Pose(58, 20, Math.toRadians(90));
         Pose footingPoseSouth = new  Pose(56.8, 8.2, Math.toRadians(-90));
-        Pose footingPoseEast = new  Pose(62.5, 17, Math.toRadians(0));
+        Pose footingPoseEast = new  Pose(62.5, 16.5, Math.toRadians(0));
         Pose preFootingNorthPose = new Pose(footingPoseNorth.getX() - 4, footingPoseNorth.getY() - 5, Math.toRadians(90));
         Pose preFootingSouthPose = new Pose(footingPoseSouth.getX() + 4, footingPoseEast.getY() + 2, Math.toRadians(-90));
         Pose preFootingEastPose = new Pose(footingPoseEast.getX() - 5, footingPoseEast.getY() + 3, Math.toRadians(0));
@@ -104,21 +107,18 @@ public class RobofestMain extends LinearOpMode {
         Pose bridgeSouthPose = new Pose(footingPoseSouth.getX(), 11.5, Math.toRadians(-90));
         Pose bridgeEastPose = new Pose(59,footingPoseEast.getY(), Math.toRadians(0));
 
-        // Beam Dropoffs
+        // Edge Poses
 
-        Pose beamSouthDropoffPose = new Pose(56.8, 11.5, Math.toRadians(-90));
+        Pose northEdgePose = new Pose(58, 21, Math.toRadians(90));
 
         // ==================================
         // CHANGE THE STUFF BELOW
         // ==================================
         Pose startPose = startPoseNorth;
-        Pose bridgeLocation = bridgeSouthPose;
-        Pose footingPusher = footingPoseSouth;
-        Pose preFootingPusher = preFootingSouthPose;
-        Pose ballDropoffPose = ballDropoffSouthPose;
-        Pose beamDropoffPose = beamSouthDropoffPose;
-
-
+        Pose bridgeLocation = bridgeEastPose;
+        Pose footingPusher = footingPoseEast;
+        Pose preFootingPusher = preFootingEastPose;
+        Pose ballDropoffPose = ballDropoffEastPose;
         // ==================================
         // CHANGE THE STUFF ABOVE
         // ==================================
@@ -131,12 +131,6 @@ public class RobofestMain extends LinearOpMode {
                 .addPath(new BezierLine(halfwayToBeam2, beam2Pose))
                 .setConstantHeadingInterpolation(beam2Pose.getHeading())
                 .build();
-        PathChain ballPickup = follower.pathBuilder()
-                .addPath(new BezierLine(bridgeLocation, bridgeCrossingPose))
-                .setLinearHeadingInterpolation(bridgeLocation.getHeading(), bridgeCrossingPose.getHeading())
-                .addPath(new BezierLine(bridgeCrossingPose, ballPickupPose))
-                .setConstantHeadingInterpolation(ballPickupPose.getHeading())
-                .build();
         PathChain bridgeTravel = follower.pathBuilder()
                 .addPath(new BezierLine(beam2Pose, halfwayToBeam2))
                 .setConstantHeadingInterpolation(halfwayToBeam2.getHeading())
@@ -146,8 +140,14 @@ public class RobofestMain extends LinearOpMode {
         PathChain bridgePusher =  follower.pathBuilder()
                 .addPath(new BezierLine(preFootingPusher, footingPusher))
                 .setConstantHeadingInterpolation(footingPusher.getHeading())
-                .addPath(new BezierLine(footingPusher, beamDropoffPose))
-                .setConstantHeadingInterpolation(beamDropoffPose.getHeading())
+                .addPath(new BezierLine(footingPusher, bridgeLocation))
+                .setConstantHeadingInterpolation(bridgeLocation.getHeading())
+                .build();
+        PathChain ballPickup = follower.pathBuilder()
+                .addPath(new BezierLine(bridgeLocation, bridgeCrossingPose))
+                .setLinearHeadingInterpolation(bridgeLocation.getHeading(), bridgeCrossingPose.getHeading())
+                .addPath(new BezierLine(bridgeCrossingPose, ballPickupPose))
+                .setConstantHeadingInterpolation(ballPickupPose.getHeading())
                 .build();
         PathChain ballDrop = follower.pathBuilder()
                 .addPath(new BezierLine(ballPickupPose, bridgeCrossingPose))
@@ -155,21 +155,30 @@ public class RobofestMain extends LinearOpMode {
                 .addPath(new BezierLine(bridgeCrossingPose, ballDropoffPose))
                 .setConstantHeadingInterpolation(ballDropoffPose.getHeading())
                 .build();
+        PathChain endgameTask = follower.pathBuilder()
+                .addPath(new BezierLine(ballDropoffPose, startPose))
+                .setLinearHeadingInterpolation(ballDropoffPose.getHeading(), startPose.getHeading())
+                .build();
 
         changeState(0);
 
         while(!isStopRequested()) {
             follower.update();
-
+            if (follower.isBusy()) {
+                doneCounter = 0;
+            } else {
+                doneCounter++;
+            }
+            boolean followerDone = doneCounter >= 3;
             boolean pressed = button.isPressed();
             if (pressed && !oldPressed && stateTime.getElapsedTimeSeconds() > 0.2) {
                 if (state == 0) {
-                //  display.writeNumber(3);
-                    display.writeCharacter('2', 0, false);
-                    display.writeCharacter('1', 1, false);
-                    display.writeCharacter('6', 2, false);
-                    display.writeCharacter('1', 3, false);
-                    display.updateDisplay(); // don't forget to call updateDisplay() or maybe do it automatically
+//                    display.writeNumber(3);
+//                    display.writeCharacter('2', 0, false);
+//                    display.writeCharacter('1', 1, false);
+//                    display.writeCharacter('6', 2, false);
+//                    display.writeCharacter('1', 3, false);
+//                    display.updateDisplay(); // don't forget to call updateDisplay() or maybe do it automatically
                     changeState(10);
                 } else {
                     changeState(0);
@@ -231,7 +240,7 @@ public class RobofestMain extends LinearOpMode {
                 case 30:
                     if (enter) {
                         follower.followPath(beam2);
-                    } else if (!follower.isBusy()) {
+                    } else if (followerDone) {
                         changeState(40);
                     }
                     break;
@@ -258,15 +267,15 @@ public class RobofestMain extends LinearOpMode {
                     break;
                 case 70:
                     if (enter) {
-                        follower.followPath(bridgeTravel);
-                    } else if (!follower.isBusy()) {
+                        follower.followPath(bridgeTravel, 0.9, true);
+                    } else if (followerDone) {
                         changeState(75);
                     }
                     break;
                 case 75:
                     if (enter) {
                         follower.followPath(bridgePusher, 0.3, true);
-                    } else if (!follower.isBusy()) {
+                    } else if (followerDone) {
                         changeState(80);
                     }
                     break;
@@ -295,7 +304,7 @@ public class RobofestMain extends LinearOpMode {
                 case 110:
                     if (enter) {
                         follower.followPath(ballPickup, 0.6, true);
-                    } else if (!follower.isBusy()) {
+                    } else if (followerDone) {
                         changeState(120);
                     }
                     break;
@@ -324,7 +333,7 @@ public class RobofestMain extends LinearOpMode {
                 case 160:
                     if (enter) {
                         follower.followPath(ballDrop);
-                    } else if (!follower.isBusy()) {
+                    } else if (followerDone) {
                         changeState(170);
                     }
                     break;
@@ -345,7 +354,8 @@ public class RobofestMain extends LinearOpMode {
                     break;
                 case 190:
                     if (enter) {
-                        //make it do the game ending task
+                        follower.followPath(endgameTask);
+                    } else if (followerDone) {
                         follower.breakFollowing();
                     }
                     break;
@@ -429,7 +439,12 @@ public class RobofestMain extends LinearOpMode {
 
     private void changeState(int newState) {
         stateTime.resetTimer();
-        display.writeNumber(newState);
+        if (ANSWER == 0) {
+            display.writeNumber(newState);
+        } else {
+            display.writeNumber(ANSWER);
+        }
+
         display.updateDisplay();
         oldState = state;
         state = newState;
