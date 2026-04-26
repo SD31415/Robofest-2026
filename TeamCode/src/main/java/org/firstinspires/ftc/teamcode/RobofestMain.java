@@ -82,7 +82,7 @@ public class RobofestMain extends LinearOpMode {
         // Edge to closet side of beam
 
         Pose beam2Pose = new Pose(13.2, 12.7, Math.toRadians(90));
-        Pose halfwayToBeam2 = new Pose(13.2, 7, Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(beam2Pose.getX(), 9, Math.toRadians(90));
 
         // Ball Poses
 
