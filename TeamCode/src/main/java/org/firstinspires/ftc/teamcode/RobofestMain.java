@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -7,12 +10,19 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.localization.Localizer;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
+
+import java.lang.reflect.Field;
+import java.util.Map;
+
+import Ori.Coval.Logging.Logger.KoalaLog;
+import Ori.Coval.Logging.Logger.SchemaRegistry;
 
 
 @TeleOp
@@ -36,7 +46,7 @@ public class RobofestMain extends LinearOpMode {
 
     public static  double ELBOW_TRAVEL = 0.6;
     public static  double ELBOW_BALL = 0.65;
-    public static double ELBOW_BEAM = 0.45;
+    public static double ELBOW_BEAM = 0.46;
     public static  double ELBOW_PICKUP = 0.015;
     
     // Wrist
@@ -82,7 +92,7 @@ public class RobofestMain extends LinearOpMode {
         // Edge to closet side of beam
 
         Pose beam2Pose = new Pose(13.2, 12.7, Math.toRadians(90));
-        Pose halfwayToBeam2 = new Pose(beam2Pose.getX(), 9, Math.toRadians(90));
+        Pose halfwayToBeam2 = new Pose(beam2Pose.getX(), 10, Math.toRadians(90));
 
         // Ball Poses
 
@@ -97,15 +107,15 @@ public class RobofestMain extends LinearOpMode {
         Pose footingPoseSouth = new  Pose(56.8, 8.2, Math.toRadians(-90));
         Pose footingPoseEast = new  Pose(62.5 + 0.5, 16.5, Math.toRadians(0));
         Pose preFootingNorthPose = new Pose(footingPoseNorth.getX(), footingPoseNorth.getY() - 5, Math.toRadians(90));
-        Pose preFootingSouthPose = new Pose(footingPoseSouth.getX(), footingPoseEast.getY() + 2, Math.toRadians(-90));
-        Pose preFootingEastPose = new Pose(footingPoseEast.getX() - 4, footingPoseEast.getY() + 1, Math.toRadians(0));
+        Pose preFootingSouthPose = new Pose(footingPoseSouth.getX(), footingPoseEast.getY() + 2 /* BUG! */, Math.toRadians(-90));
+        Pose preFootingEastPose = new Pose(footingPoseEast.getX() - 4, footingPoseEast.getY(), Math.toRadians(0));
 
         // Bridge location poses
 
         Pose bridgeCrossingPose = new Pose(toInches(140), toInches(30),Math.toRadians(90));
         Pose bridgeNorthPose = new Pose(footingPoseNorth.getX(), 16.1, Math.toRadians(90));
         Pose bridgeSouthPose = new Pose(footingPoseSouth.getX(), 11.5, Math.toRadians(-90));
-        Pose bridgeEastPose = new Pose(59,footingPoseEast.getY(), Math.toRadians(0));
+        Pose bridgeEastPose = new Pose(59.5,footingPoseEast.getY(), Math.toRadians(0));
 
         // Ending Poses
 
@@ -191,8 +201,10 @@ public class RobofestMain extends LinearOpMode {
 //                    display.writeCharacter('1', 3, false);
 //                    display.updateDisplay(); // don't forget to call updateDisplay() or maybe do it automatically
                     changeState(10);
+                    startLog();
                 } else {
                     changeState(0);
+                    stopLog();
                 }
 
             }
@@ -280,7 +292,7 @@ public class RobofestMain extends LinearOpMode {
                 case 60:
                     if (enter) {
                         armTravel();
-                    } else if (stateTime.getElapsedTime() <= 1000) {
+                    } else if (stateTime.getElapsedTime() <= 1000) { // BUG but fix by going to state 70 right away to avoid wasting 1 second
                         changeState(70);
                     }
                     break;
@@ -300,8 +312,8 @@ public class RobofestMain extends LinearOpMode {
                     break;
                 case 80:
                     if (enter) {
-                    armBeam();
-                    } else if (stateTime.getElapsedTime() >= 2000) {
+                        armBeam();
+                    } else if (stateTime.getElapsedTime() >= 1000) {
                         changeState(90);
                     }
                     break;
@@ -309,7 +321,7 @@ public class RobofestMain extends LinearOpMode {
                     if (enter) {
                         openRight();
                         openLeft();
-                    } else if (stateTime.getElapsedTime() >= 1250) {
+                    } else if (stateTime.getElapsedTime() >= 250) {
                         changeState(100);
                     }
                     break;
@@ -390,6 +402,18 @@ public class RobofestMain extends LinearOpMode {
             //telemetry.addData("lift", lift.getPosition());
             //telemetry.addData("claw", claw.getPosition());
             telemetry.update();
+
+            if (state != 0) {
+                KoalaLog.log("state", state, false);
+                KoalaLog.log("stateTime", stateTime.getElapsedTimeSeconds(), false);
+                KoalaLog.log("busy", follower.isBusy(), false);
+                KoalaLog.log("gripLeft", gripLeft.getPosition(), false);
+                KoalaLog.log("gripRight", gripRight.getPosition(), false);
+                KoalaLog.log("elbow", elbow.getPosition(), false);
+                KoalaLog.log("wrist", wrist.getPosition(), false);
+                KoalaLog.logPose2d("Pose", follower.getPose().getX()*0.0254, follower.getPose().getY()*0.0254, follower.getPose().getHeading(), false);
+                KoalaLog.log("pathCompletion", follower.getPathCompletion(), false);
+            }
         }
     }
 
@@ -471,5 +495,22 @@ public class RobofestMain extends LinearOpMode {
         display.updateDisplay();
         oldState = state;
         state = newState;
+    }
+
+    private void startLog() {
+        // init logging
+        Context context = hardwareMap.appContext;
+        SharedPreferences prefs = context.getSharedPreferences("team_prefs", Context.MODE_PRIVATE);
+        int runCount = prefs.getInt("run_count", 1000);
+        runCount++;
+        prefs.edit().putInt("run_count", runCount).apply();
+
+        String logFile = "Robofest_" + runCount + ".wpilog";
+        KoalaLog.setup(hardwareMap, logFile);
+        KoalaLog.start();
+    }
+
+    private void stopLog() {
+        KoalaLog.stop();
     }
 }

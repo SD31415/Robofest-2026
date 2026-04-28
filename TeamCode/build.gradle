@@ -23,6 +23,11 @@ android {
     }
 }
 
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
     implementation project(':FtcRobotController')
+    implementation 'com.github.monkbroc.Koala-Log:KoalaLogger:jv-SNAPSHOT'
 }
