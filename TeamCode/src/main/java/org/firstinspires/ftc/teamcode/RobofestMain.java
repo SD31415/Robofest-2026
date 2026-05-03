@@ -29,7 +29,7 @@ import Ori.Coval.Logging.Logger.SchemaRegistry;
 @Config
 public class RobofestMain extends LinearOpMode {
     /// @noinspection FieldCanBeLocal
-    /** @noinspection VariablesCanBeRedundant*/
+    /// @noinspection VariablesCanBeRedundant
     private Follower follower;
     private Servo elbow;
     private Servo wrist;
@@ -99,13 +99,13 @@ public class RobofestMain extends LinearOpMode {
         Pose ballPickupPose = new Pose(27.6, 11.5, Math.toRadians(90));
         Pose ballDropoffNorthPose = new Pose (57.5, 15.8, Math.toRadians(90));
         Pose ballDropoffEastPose = new Pose (58, 17, Math.toRadians(0));
-        Pose ballDropoffSouthPose = new Pose (57, 12.5, Math.toRadians(-90));
+        Pose ballDropoffSouthPose = new Pose (57.5, 13, Math.toRadians(-90));
 
         // Footing one poses
 
         Pose footingPoseNorth = new  Pose(58, 20, Math.toRadians(90));
-        Pose footingPoseSouth = new  Pose(56.8, 8.2, Math.toRadians(-90));
-        Pose footingPoseEast = new  Pose(62.5 + 0.5, 16.5, Math.toRadians(0));
+        Pose footingPoseSouth = new  Pose(57.55, 8.2, Math.toRadians(-90));
+        Pose footingPoseEast = new  Pose(62.3, 16.5, Math.toRadians(0));
         Pose preFootingNorthPose = new Pose(footingPoseNorth.getX(), footingPoseNorth.getY() - 5, Math.toRadians(90));
         Pose preFootingSouthPose = new Pose(footingPoseSouth.getX(), footingPoseEast.getY() + 2 /* BUG! */, Math.toRadians(-90));
         Pose preFootingEastPose = new Pose(footingPoseEast.getX() - 4, footingPoseEast.getY(), Math.toRadians(0));
@@ -123,7 +123,7 @@ public class RobofestMain extends LinearOpMode {
         Pose southEdgePose = new Pose(40, 8, Math.toRadians(-90));
         Pose eastEdgePose = new Pose(62.5, 16.5, Math.toRadians(0));
         Pose westEdgePose = new Pose(5, 8, Math.toRadians(180));
-//        Pose crossingPose = new Pose(58, 21, Math.toRadians(90));
+        Pose crossingPose = new Pose(58, 21, Math.toRadians(90));
 
         // ==================================
         // CHANGE THE STUFF BELOW
@@ -131,15 +131,15 @@ public class RobofestMain extends LinearOpMode {
         //noinspection UnnecessaryLocalVariable
         Pose startPose = startPoseNorth;
         //noinspection UnnecessaryLocalVariable
-        Pose bridgeLocation = bridgeEastPose;
+        Pose bridgeLocation = bridgeSouthPose;
         //noinspection UnnecessaryLocalVariable
-        Pose footingPusher = footingPoseEast;
+        Pose footingPusher = footingPoseSouth;
         //noinspection UnnecessaryLocalVariable
-        Pose preFootingPusher = preFootingEastPose;
+        Pose preFootingPusher = preFootingSouthPose;
         //noinspection UnnecessaryLocalVariable
-        Pose ballDropoffPose = ballDropoffEastPose;
+        Pose ballDropoffPose = ballDropoffSouthPose;
         //noinspection UnnecessaryLocalVariable
-//        Pose endingPose = northEdgePose;
+        Pose endPose = ballPickupPose;
 //        setAnswer(9);
         // ==================================
         // CHANGE THE STUFF ABOVE
@@ -177,8 +177,8 @@ public class RobofestMain extends LinearOpMode {
                 .setConstantHeadingInterpolation(ballDropoffPose.getHeading())
                 .build();
         PathChain endgameTask = follower.pathBuilder()
-                .addPath(new BezierLine(ballDropoffPose, startPoseEast))
-                .setLinearHeadingInterpolation(ballDropoffPose.getHeading(), startPoseEast.getHeading())
+                .addPath(new BezierLine(ballDropoffPose, endPose))
+                .setLinearHeadingInterpolation(ballDropoffPose.getHeading(), endPose.getHeading())
                 .build();
 
         changeState(0);
@@ -380,6 +380,7 @@ public class RobofestMain extends LinearOpMode {
                         openRight();
                         openLeft();
                     } else if (stateTime.getElapsedTime() >= 1250) {
+                        armTravel();
                         changeState(190);
                     }
                     break;
@@ -399,8 +400,6 @@ public class RobofestMain extends LinearOpMode {
             telemetry.addData("Y", follower.getPose().getY());
             telemetry.addData("Heading", Math.toDegrees(follower.getPose().getHeading()));
             telemetry.addData("buttonIsPressed", button.isPressed());
-            //telemetry.addData("lift", lift.getPosition());
-            //telemetry.addData("claw", claw.getPosition());
             telemetry.update();
 
             if (state != 0) {
@@ -445,45 +444,12 @@ public class RobofestMain extends LinearOpMode {
         elbow.setPosition(ELBOW_BEAM);
         wrist.setPosition(WRIST_BEAM);
     }
-    private void ballArmPickup() {
-
-    }
-    private void ballArmTravel() {
-
-    }
-    private void ballArmDropoff() {
-
-    }
     private static double toInches(double centimeters) {
         return(centimeters/2.54);
     }
     public static void setAnswer(int newValue) {
         ANSWER = newValue;
     }
-
-//    private void liftUp() {
-//        lift.setPosition(LIFT_UP);
-//    }
-//
-//    private void liftStart() {
-//        lift.setPosition(LIFT_START);
-//    }
-//
-//    private void liftDown() {
-//        lift.setPosition(LIFT_DOWN);
-//    }
-//    private void liftDrop() {
-//        lift.setPosition(LIFT_DROP);
-//    }
-//
-//    private void liftMedal() {
-//        lift.setPosition(LIFT_MEDAL);
-//    }
-//
-//    private void closeClaw() {
-//        claw.setPosition(CLAW_CLOSED);
-//    }
-
     private void changeState(int newState) {
         stateTime.resetTimer();
         if (ANSWER == 0) {
